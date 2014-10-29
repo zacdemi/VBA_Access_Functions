@@ -1,0 +1,21 @@
+'Check record count of any table or query
+Public Function countRecords(tableName As String) As Long
+    Dim rs As DAO.Recordset
+    Dim db As DAO.Database
+    
+    sql = "SELECT * FROM " & tableName & ""
+    
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset(sql)
+    
+    If Not (rs.EOF And rs.BOF) Then
+        rs.MoveLast
+        rs.MoveFirst
+        countRecords = rs.recordCount
+    Else
+        countRecords = 0
+    End If
+        
+    rs.Close 'Close the recordset
+    Set rs = Nothing 'Clean up
+End Function
