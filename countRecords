@@ -3,7 +3,7 @@ Public Function countRecords(tableName As String) As Long
     Dim rs As DAO.Recordset
     Dim db As DAO.Database
     
-    sql = "SELECT * FROM " & tableName & ""
+    sql = "SELECT * FROM " & "[" & tableName & "]" & ""
     
     Set db = CurrentDb
     Set rs = db.OpenRecordset(sql)
