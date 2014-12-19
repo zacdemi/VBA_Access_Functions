@@ -2,7 +2,7 @@
 'This function iterates through a user list and splits a file at each change in user list criteria.
 '**************************************************************************************************************
 
-Public Function exportReports()
+Public Function splitReport()
 
 Dim rs As DAO.Recordset
 Dim db As DAO.Database
