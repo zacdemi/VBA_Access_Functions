@@ -1,0 +1,82 @@
+'**************************************************************************************************************
+'This function iterates through a user list and splits a file at each change in user list criteria.
+'**************************************************************************************************************
+
+Public Function exportReports()
+
+Dim rs As DAO.Recordset
+Dim db As DAO.Database
+Dim qdf As DAO.QueryDef
+
+Dim hospList As String
+Dim hospName As String
+Dim exportPath As String
+Dim fileDate As String
+Dim inputDate As Date
+
+inputDate = [Forms]![Date]![fileDate]
+fileDate = Year(inputDate) & "-" & Month(inputDate) & "-" & Day(inputDate)
+
+'file path to folder with date selected by user
+exportPath = "S:your file path\" & fileDate & "\"
+
+'hospital list on userform
+hospList = " SELECT replace(hospitalName,'.','') as [hospital Name], facilityId" & _
+           " FROM tblHospitals"
+           
+Set db = CurrentDb
+Set rs = db.OpenRecordset(hospList)
+
+    'Check if export directory exist
+    If Dir(exportPath, vbDirectory) = "" Then
+        MkDir exportPath
+    Else
+        MsgBox exportPath & "  Already exists. Please delete folder, or change file date on the user form"
+        Exit Function
+    End If
+
+exportRecordCount = 0
+
+'check if table on userform contains records
+If Not (rs.EOF And rs.BOF) Then
+    rs.MoveFirst
+    Do Until rs.EOF = True
+        
+        'criteria of exportQuery from table on userform
+        facilityId = rs![facilityId]
+        hospName = rs![hospital Name]
+        
+        'hospital query to export using criteria above
+        exportQuery = " SELECT tblRetroReport.Location, tblRetroReport.[Payroll Code], tblRetroReport.Name, tblRetroReport.[Employee Id], tblRetroReport.[Deduction Code], tblRetroReport.[Payroll Profile], tblRetroReport.Balance, tblRetroReport.[Benefit Effective Date], tblRetroReport.[Paydate of First Retro]" & _
+                      " FROM tblRetroReport" & _
+                      " WHERE facilityCode = '" & facilityId & "';"
+        
+        'create report and add record count to total export count
+        Set qdf = CurrentDb.CreateQueryDef(hospName, exportQuery)
+            rsr.MoveLast
+            rsr.MoveFirst
+            exportRecordCount = exportRecordCount + rsr.recordCount
+        
+        'file name
+        retroFileName = hospName & "_" & fileDate & ".xlsx"
+        'export logic
+        DoCmd.TransferSpreadsheet acExport, acSpreadsheetTypeExcel12Xml, hospName, exportPath & retroFileName, True
+        'delete hospital query object
+        DoCmd.DeleteObject acQuery, hospName
+        
+        rs.MoveNext
+    Loop
+Else
+    MsgBox "You need to add a hospital location and hospital name to table located on user form."
+End If
+
+MsgBox "You have exported " & exportRecordCount & " Records"
+
+'message and query to infrom user of records that did not export
+MsgBox "Please review " & notExported & " records that did not export. These records did not export because they are not on the hospital list. Ask why they are on the retro file or update the hospital list."
+DoCmd.OpenQuery "didNotExport", acViewNormal
+
+rs.Close 'Close the recordset
+Set rs = Nothing 'Clean up
+
+End Function
