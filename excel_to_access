@@ -1,0 +1,36 @@
+Public Function ExcelToAccess(filespec As String)
+'this function converts all excel files in a folder to individual access databases.
+'The file name becomes the access database name the table name.
+'Its a good work around for the access 2gb limit
+
+    Dim strPath As String
+    Dim strFile As String
+    Dim tablename As String
+    Dim database_path As String
+    Dim accessApp As Access.Application
+    Set accessApp = New Access.Application
+    
+    database_path = "S:yourpath\\" 'where you want your database to appear
+    strPath = "S:yourpath\" 'where excel files are stored
+    strFile = Dir(strPath & "*")
+    
+    If strFile = "" Then 'make sure file exist
+        MsgBox "That file does not exist."
+    End If
+    
+    DoCmd.SetWarnings False
+    
+    Do While strFile <> ""
+        tablename = Left(strFile, Len(strFile) - 4) 'removes the .csv
+        
+        accessApp.DBEngine.CreateDatabase database_path & tablename & ".accdb", dbLangGeneral 'create new database
+        DoCmd.TransferText acImportDelim, filespec, tablename, strPath & strFile, True 'file import logic
+        DoCmd.CopyObject database_path & tablename & ".accdb", tablename, acTable, tablename 'paste import to new database
+        DoCmd.DeleteObject acTable, tablename 'delete table
+        
+    strFile = Dir
+    Loop
+
+    MsgBox "All Excel files have been converted to individual access databases "
+    
+End Function
